@@ -7,6 +7,7 @@ from uuid import uuid4
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.analyzer.code_scan import scan_code
 from app.analyzer.metadata import MetadataExtractionError, extract_metadata
 from app.analyzer.rules import run_rules, summarize_risk
 from app.config import get_settings
@@ -57,7 +58,8 @@ async def analyze(
                 settings.max_upload_mb * 1024 * 1024,
             )
             metadata = extract_metadata(stored.path)
-            findings = run_rules(metadata)
+            code = scan_code(stored.path)
+            findings = run_rules(metadata, code)
             return AnalysisReport(
                 analysis_id=str(uuid4()),
                 filename=stored.original_name,
@@ -66,6 +68,7 @@ async def analyze(
                 received_at=datetime.now(UTC),
                 archive=stored.archive,
                 metadata=metadata,
+                code=code,
                 findings=findings,
                 risk=summarize_risk(findings),
             )

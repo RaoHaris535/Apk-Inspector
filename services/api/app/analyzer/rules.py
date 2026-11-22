@@ -1,6 +1,6 @@
 from collections import Counter
 
-from app.models import AppMetadata, Finding, RiskSummary, Severity
+from app.models import AppMetadata, CodeIndicators, Finding, RiskSummary, Severity
 
 DANGEROUS_PERMISSIONS: dict[str, tuple[str, Severity, int]] = {
     "android.permission.MANAGE_EXTERNAL_STORAGE": ("All-files storage access", Severity.HIGH, 16),
@@ -244,13 +244,91 @@ def _signing_rules(metadata: AppMetadata) -> list[Finding]:
     return []
 
 
-def run_rules(metadata: AppMetadata) -> list[Finding]:
+def _code_rules(code: CodeIndicators) -> list[Finding]:
+    findings = []
+    techniques = {indicator.technique: indicator for indicator in code.techniques}
+    if code.secrets:
+        findings.append(
+            _finding(
+                "CODE_HARDCODED_SECRET",
+                "Potential hardcoded secrets detected",
+                Severity.HIGH,
+                "Code",
+                "Credential-like values embedded in an APK can be recovered by "
+                "anyone who obtains the package.",
+                [f"{secret.kind} in {secret.source}: {secret.evidence}" for secret in code.secrets],
+                "Remove secrets from client code, rotate exposed values, and use "
+                "a server-mediated design.",
+                18,
+            )
+        )
+    if code.cleartext_urls:
+        findings.append(
+            _finding(
+                "CODE_CLEARTEXT_ENDPOINT",
+                "Cleartext endpoints embedded in code",
+                Severity.MEDIUM,
+                "Network",
+                "HTTP endpoints can expose application traffic to interception and modification.",
+                code.cleartext_urls,
+                "Replace HTTP endpoints with HTTPS and enforce transport security.",
+                9,
+            )
+        )
+    if "dynamic_code_loading" in techniques:
+        findings.append(
+            _finding(
+                "CODE_DYNAMIC_LOADING",
+                "Dynamic code loading indicators",
+                Severity.MEDIUM,
+                "Code",
+                "Loading code at runtime can bypass review of the original package "
+                "and increases supply-chain risk.",
+                techniques["dynamic_code_loading"].evidence,
+                "Avoid remote or writable-path code loading and verify all "
+                "dynamically loaded modules.",
+                11,
+            )
+        )
+    if "runtime_command_execution" in techniques:
+        findings.append(
+            _finding(
+                "CODE_RUNTIME_EXEC",
+                "Runtime command execution indicators",
+                Severity.HIGH,
+                "Code",
+                "Process execution can provide powerful behavior outside normal "
+                "Android application APIs.",
+                techniques["runtime_command_execution"].evidence,
+                "Remove shell execution or strictly constrain fixed commands and untrusted input.",
+                16,
+            )
+        )
+    if "accessibility_service" in techniques:
+        findings.append(
+            _finding(
+                "CODE_ACCESSIBILITY_SERVICE",
+                "Accessibility service implementation detected",
+                Severity.HIGH,
+                "Behavior",
+                "Accessibility services can observe interface content and perform "
+                "actions across other applications.",
+                techniques["accessibility_service"].evidence,
+                "Use accessibility APIs only for a clearly disclosed accessibility purpose.",
+                16,
+            )
+        )
+    return findings
+
+
+def run_rules(metadata: AppMetadata, code: CodeIndicators | None = None) -> list[Finding]:
     findings = [
         *_application_rules(metadata),
         *_sdk_rules(metadata),
         *_permission_rules(metadata),
         *_component_rules(metadata),
         *_signing_rules(metadata),
+        *_code_rules(code or CodeIndicators()),
     ]
     severity_order = {
         Severity.CRITICAL: 0,

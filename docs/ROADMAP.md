@@ -5,7 +5,7 @@
 - [x] Secure APK ingestion API
 - [x] Manifest, certificate, and component extraction
 - [x] Android security rule engine
-- [ ] DEX, endpoint, secret, and native-library indicators
+- [x] DEX, endpoint, secret, and native-library indicators
 - [ ] Explainable risk scoring and report download
 - [ ] Trusted APK comparison
 - [ ] Controlled test fixtures and integration coverage

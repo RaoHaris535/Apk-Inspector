@@ -61,6 +61,32 @@ class SigningInfo(BaseModel):
     certificates: list[SigningCertificate] = Field(default_factory=list)
 
 
+class SecretIndicator(BaseModel):
+    kind: str
+    evidence: str
+    source: str
+
+
+class TechniqueIndicator(BaseModel):
+    technique: str
+    evidence: list[str] = Field(default_factory=list)
+
+
+class NativeLibraryInfo(BaseModel):
+    path: str
+    architecture: str
+    size_bytes: int = Field(ge=0)
+
+
+class CodeIndicators(BaseModel):
+    urls: list[str] = Field(default_factory=list)
+    cleartext_urls: list[str] = Field(default_factory=list)
+    secrets: list[SecretIndicator] = Field(default_factory=list)
+    techniques: list[TechniqueIndicator] = Field(default_factory=list)
+    native_libraries: list[NativeLibraryInfo] = Field(default_factory=list)
+    scanned_files: int = Field(ge=0, default=0)
+
+
 class AppMetadata(BaseModel):
     package_name: str
     app_name: str
@@ -115,6 +141,7 @@ class IngestionResult(BaseModel):
 class AnalysisReport(IngestionResult):
     status: Literal["complete"] = "complete"
     metadata: AppMetadata
+    code: CodeIndicators = Field(default_factory=CodeIndicators)
     findings: list[Finding] = Field(default_factory=list)
     risk: RiskSummary
 
