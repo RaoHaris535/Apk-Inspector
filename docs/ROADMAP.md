@@ -9,4 +9,4 @@
 - [x] Explainable risk scoring and report download
 - [x] Trusted APK comparison
 - [x] Controlled test fixtures and integration coverage
-- [ ] Vercel and Render deployment
+- [x] Vercel and Render deployment configuration

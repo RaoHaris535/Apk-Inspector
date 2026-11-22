@@ -1,0 +1,16 @@
+.git
+.github
+.next
+node_modules
+**/node_modules
+**/.next
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.venv
+*.apk
+*.aab
+coverage
+htmlcov
+docs
+demo

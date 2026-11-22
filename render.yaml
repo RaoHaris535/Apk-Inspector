@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: apk-inspector-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./services/api
+    dockerfilePath: ./services/api/Dockerfile
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: APKINSPECTOR_ENVIRONMENT
+        value: production
+      - key: APKINSPECTOR_MAX_UPLOAD_MB
+        value: 100
+      - key: APKINSPECTOR_ANALYSIS_TIMEOUT_SECONDS
+        value: 180
+      - key: APKINSPECTOR_ALLOWED_ORIGINS
+        sync: false

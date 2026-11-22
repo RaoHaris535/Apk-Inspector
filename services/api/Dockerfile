@@ -21,3 +21,7 @@ USER root
 COPY tests ./tests
 RUN pip install ".[dev]"
 CMD ["pytest"]
+
+# Keep the production runtime as the default final stage. The test stage remains
+# available explicitly through `docker build --target test`.
+FROM runtime AS production
