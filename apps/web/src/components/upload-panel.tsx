@@ -1,11 +1,14 @@
 "use client";
 
-import { ChangeEvent, DragEvent, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 import { Beaker, FileArchive, GitCompareArrows, LoaderCircle, LockKeyhole, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 type UploadState = "idle" | "ready" | "uploading" | "error";
+type ServiceState = "checking" | "ready" | "warming" | "offline";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 function formatBytes(bytes: number) {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -22,12 +25,46 @@ export function UploadPanel() {
   const [state, setState] = useState<UploadState>("idle");
   const [message, setMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [serviceState, setServiceState] = useState<ServiceState>("checking");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const warmingTimer = window.setTimeout(() => setServiceState("warming"), 2500);
+    const timeout = window.setTimeout(() => controller.abort(), 45000);
+
+    const checkService = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/v1/health`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        setServiceState(response.ok ? "ready" : "offline");
+      } catch {
+        if (!controller.signal.aborted) setServiceState("offline");
+      } finally {
+        window.clearTimeout(warmingTimer);
+        window.clearTimeout(timeout);
+      }
+    };
+
+    void checkService();
+    return () => {
+      controller.abort();
+      window.clearTimeout(warmingTimer);
+      window.clearTimeout(timeout);
+    };
+  }, []);
 
   const validateFile = (candidate?: File) => {
     if (!candidate) return;
     if (!candidate.name.toLowerCase().endsWith(".apk")) {
       setState("error");
       setMessage("Choose a valid Android APK file.");
+      return false;
+    }
+    if (candidate.size === 0) {
+      setState("error");
+      setMessage("The selected APK is empty.");
       return false;
     }
     if (candidate.size > MAX_UPLOAD_BYTES) {
@@ -73,12 +110,13 @@ export function UploadPanel() {
     if (compareMode && referenceFile) form.append("reference_file", referenceFile);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
       const endpoint = compareMode ? "/api/v1/compare" : "/api/v1/analyze";
-      const response = await fetch(`${apiUrl}${endpoint}`, { method: "POST", body: form });
+      const response = await fetch(`${API_URL}${endpoint}`, { method: "POST", body: form });
       if (!response.ok) {
         const error = await response.json().catch(() => null);
-        throw new Error(error?.detail?.message ?? "Analysis service did not accept the APK.");
+        const detail = error?.detail;
+        const reason = typeof detail === "string" ? detail : detail?.message;
+        throw new Error(reason ?? "Analysis service did not accept the APK.");
       }
       const result = await response.json();
       const report = compareMode ? result.submitted : result;
@@ -93,18 +131,31 @@ export function UploadPanel() {
   };
 
   const openDemo = async () => {
-    const response = await fetch("/demo/insecure-report.json");
-    const report = await response.json();
-    sessionStorage.setItem("apkinspector:last-report", JSON.stringify(report));
-    sessionStorage.removeItem("apkinspector:last-comparison");
-    router.push("/report");
+    try {
+      const response = await fetch("/demo/insecure-report.json");
+      if (!response.ok) throw new Error("The demonstration report is temporarily unavailable.");
+      const report = await response.json();
+      sessionStorage.setItem("apkinspector:last-report", JSON.stringify(report));
+      sessionStorage.removeItem("apkinspector:last-comparison");
+      router.push("/report");
+    } catch (error) {
+      setState("error");
+      setMessage(error instanceof Error ? error.message : "The demonstration could not be opened.");
+    }
   };
 
+  const serviceCopy = {
+    checking: "Checking analyzer",
+    warming: "Waking analyzer",
+    ready: "Analyzer online",
+    offline: "Analyzer unavailable",
+  }[serviceState];
+
   return (
-    <section className="upload-shell" aria-labelledby="upload-title">
+    <section className="upload-shell spotlight-card" aria-labelledby="upload-title">
       <div className="upload-head">
         <div><span className="panel-label">Start an inspection</span><h2 id="upload-title">Upload your APK</h2></div>
-        <span className="service-status"><i /> Analyzer ready</span>
+        <span className={`service-status ${serviceState}`} aria-live="polite"><i /> {serviceCopy}</span>
       </div>
       <div className={`drop-zone ${isDragging ? "dragging" : ""} ${file ? "has-file" : ""}`} onDragEnter={() => setIsDragging(true)} onDragLeave={() => setIsDragging(false)} onDragOver={(event) => event.preventDefault()} onDrop={onDrop}>
         <input ref={inputRef} type="file" accept=".apk,application/vnd.android.package-archive" onChange={onInput} />
@@ -142,7 +193,7 @@ export function UploadPanel() {
           {referenceFile && <button type="button" className="icon-button" aria-label="Remove reference APK" onClick={() => setReferenceFile(null)}><X aria-hidden="true" /></button>}
         </div>
       )}
-      {message && <p className={`upload-message ${state}`}>{message}</p>}
+      {message && <p className={`upload-message ${state}`} role={state === "error" ? "alert" : "status"}>{message}</p>}
       <button className="analyze-button" type="button" disabled={!file || (compareMode && !referenceFile) || state === "uploading"} onClick={analyze}>
         {state === "uploading" ? <LoaderCircle className="spin" aria-hidden="true" /> : <LockKeyhole aria-hidden="true" />}
         {state === "uploading" ? "Analyzing package" : compareMode ? "Compare APKs securely" : "Analyze APK securely"}

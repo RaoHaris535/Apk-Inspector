@@ -1,15 +1,25 @@
 import type { Metadata } from "next";
+
+import { PointerGlow } from "@/components/pointer-glow";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "APKInspector",
-  description: "Explainable static security analysis for Android APK files.",
+  title: "APKInspector — Explainable Android Security Analysis",
+  description:
+    "Inspect Android APK permissions, manifests, signatures, and code indicators without installing or executing the app.",
+  applicationName: "APKInspector",
+  keywords: ["APK", "Android", "static analysis", "security", "malware analysis"],
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" data-scroll-behavior="smooth">
+      <body>
+        <a className="skip-link" href="#main-content">Skip to main content</a>
+        <PointerGlow />
+        {children}
+      </body>
     </html>
   );
 }
