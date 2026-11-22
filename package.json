@@ -1,0 +1,17 @@
+{
+  "name": "apk-inspector",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @apkinspector/web",
+    "build": "npm run build --workspace @apkinspector/web",
+    "lint": "npm run lint --workspace @apkinspector/web",
+    "test": "npm run test --workspace @apkinspector/web"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

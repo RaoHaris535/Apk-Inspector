@@ -1,0 +1,12 @@
+import { render, screen } from "@testing-library/react";
+import { expect, test } from "vitest";
+
+import Home from "./page";
+
+test("introduces the APK security analyzer", () => {
+  render(<Home />);
+
+  expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
+    "Know what an APK contains",
+  );
+});
