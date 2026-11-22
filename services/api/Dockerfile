@@ -19,8 +19,9 @@ CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
 FROM runtime AS test
 USER root
 COPY tests ./tests
+COPY scripts ./scripts
 RUN pip install ".[dev]"
-CMD ["pytest"]
+CMD ["sh", "scripts/test.sh"]
 
 # Keep the production runtime as the default final stage. The test stage remains
 # available explicitly through `docker build --target test`.

@@ -31,5 +31,9 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -e 'services/api[dev]'
-      - run: ruff check services/api
-      - run: pytest services/api
+      - run: ruff check .
+        working-directory: services/api
+      - run: coverage run -m pytest
+        working-directory: services/api
+      - run: coverage report
+        working-directory: services/api
