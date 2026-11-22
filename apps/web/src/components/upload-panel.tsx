@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, DragEvent, useRef, useState } from "react";
-import { FileArchive, GitCompareArrows, LoaderCircle, LockKeyhole, Upload, X } from "lucide-react";
+import { Beaker, FileArchive, GitCompareArrows, LoaderCircle, LockKeyhole, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
@@ -92,6 +92,14 @@ export function UploadPanel() {
     }
   };
 
+  const openDemo = async () => {
+    const response = await fetch("/demo/insecure-report.json");
+    const report = await response.json();
+    sessionStorage.setItem("apkinspector:last-report", JSON.stringify(report));
+    sessionStorage.removeItem("apkinspector:last-comparison");
+    router.push("/report");
+  };
+
   return (
     <section className="upload-shell" aria-labelledby="upload-title">
       <div className="upload-head">
@@ -140,6 +148,7 @@ export function UploadPanel() {
         {state === "uploading" ? "Analyzing package" : compareMode ? "Compare APKs securely" : "Analyze APK securely"}
       </button>
       <p className="upload-note">Maximum 100 MB · Static inspection · File deleted after analysis</p>
+      <button className="demo-button" type="button" onClick={openDemo}><Beaker aria-hidden="true" /> View safe demonstration report</button>
     </section>
   );
 }

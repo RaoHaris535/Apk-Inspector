@@ -91,6 +91,9 @@ main {
 .analyze-button:disabled { cursor: not-allowed; opacity: 0.38; box-shadow: none; }
 .analyze-button svg { width: 19px; }
 .upload-note { margin: 12px 0 0; text-align: center; color: var(--faint); font-size: 0.68rem; }
+.demo-button { width: 100%; margin-top: 13px; border: 0; background: transparent; color: #8da29a; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 0.7rem; font-weight: 700; }
+.demo-button:hover { color: var(--green); }
+.demo-button svg { width: 15px; }
 .upload-message { margin: 12px 2px -3px; font-size: 0.78rem; }
 .upload-message.error { color: #ff9d94; }
 .upload-message.uploading { color: var(--green); }

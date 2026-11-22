@@ -8,5 +8,5 @@
 - [x] DEX, endpoint, secret, and native-library indicators
 - [x] Explainable risk scoring and report download
 - [x] Trusted APK comparison
-- [ ] Controlled test fixtures and integration coverage
+- [x] Controlled test fixtures and integration coverage
 - [ ] Vercel and Render deployment

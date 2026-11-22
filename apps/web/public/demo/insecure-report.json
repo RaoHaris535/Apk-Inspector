@@ -1,0 +1,126 @@
+{
+  "analysis_id": "demo-intentionally-insecure",
+  "status": "complete",
+  "filename": "insecure-demo.apk",
+  "size_bytes": 1843200,
+  "sha256": "58f7f0d13a24cd7b6c66be4bdcb627bd0f6d43089ef4ea582da0a62b8a28d715",
+  "received_at": "2026-11-22T10:30:00Z",
+  "archive": {
+    "entry_count": 438,
+    "compressed_bytes": 1843200,
+    "uncompressed_bytes": 4128768,
+    "dex_files": 2,
+    "native_libraries": 1
+  },
+  "metadata": {
+    "package_name": "edu.apkinspector.insecuredemo",
+    "app_name": "Insecure Demo",
+    "version_name": "1.0-demo",
+    "version_code": "1",
+    "main_activity": "edu.apkinspector.insecuredemo.MainActivity",
+    "sdk": { "minimum": 23, "target": 28, "maximum": null },
+    "application": {
+      "debuggable": true,
+      "allow_backup": true,
+      "uses_cleartext_traffic": true,
+      "network_security_config": null
+    },
+    "permissions": [
+      "android.permission.INTERNET",
+      "android.permission.READ_SMS",
+      "android.permission.RECEIVE_SMS",
+      "android.permission.SYSTEM_ALERT_WINDOW"
+    ],
+    "declared_permissions": [],
+    "components": {
+      "activities": [{ "name": "edu.apkinspector.insecuredemo.MainActivity", "exported": true }],
+      "services": [{ "name": "edu.apkinspector.insecuredemo.SyncService", "exported": true }],
+      "receivers": [{ "name": "edu.apkinspector.insecuredemo.BootReceiver", "exported": true }],
+      "providers": [{ "name": "edu.apkinspector.insecuredemo.DataProvider", "exported": true }]
+    },
+    "libraries": [],
+    "signing": {
+      "signed_v1": true,
+      "signed_v2": false,
+      "signed_v3": false,
+      "certificates": [{
+        "sha256": "81337EE75C4E084D74C25A84C92B418F638C0FE604B8DB991FDDFF9A58E6630A",
+        "sha1": "16A0E21B7D56B089CE95A2D982DB9B5E2B1BC9EF",
+        "subject": "CN=APKInspector Demonstration",
+        "issuer": "CN=APKInspector Demonstration",
+        "serial_number": "1",
+        "valid_from": "2026-01-01T00:00:00Z",
+        "valid_until": "2036-01-01T00:00:00Z"
+      }]
+    }
+  },
+  "code": {
+    "urls": ["http://demo.invalid/api/login"],
+    "cleartext_urls": ["http://demo.invalid/api/login"],
+    "secrets": [{ "kind": "Potential hardcoded secret", "evidence": "demo…2345", "source": "classes.dex" }],
+    "techniques": [
+      { "technique": "dynamic_code_loading", "evidence": ["dalvik/system/DexClassLoader"] },
+      { "technique": "runtime_command_execution", "evidence": ["java/lang/Runtime;->exec"] }
+    ],
+    "native_libraries": [{ "path": "lib/arm64-v8a/libdemo.so", "architecture": "arm64-v8a", "size_bytes": 40960 }],
+    "scanned_files": 5
+  },
+  "findings": [
+    {
+      "rule_id": "PERMISSION_SMS_COMBINATION",
+      "title": "Broad SMS capability combination",
+      "severity": "critical",
+      "category": "Permissions",
+      "description": "Combined SMS reading and receiving access can enable interception of sensitive messages.",
+      "evidence": ["android.permission.READ_SMS", "android.permission.RECEIVE_SMS"],
+      "remediation": "Remove unnecessary SMS permissions and use platform-mediated alternatives.",
+      "score": 28
+    },
+    {
+      "rule_id": "MANIFEST_DEBUGGABLE",
+      "title": "Application is debuggable",
+      "severity": "high",
+      "category": "Manifest",
+      "description": "Production applications with debugging enabled expose additional inspection and control surfaces.",
+      "evidence": ["android:debuggable=true"],
+      "remediation": "Disable debugging in the release build and verify the signed production manifest.",
+      "score": 18
+    },
+    {
+      "rule_id": "NETWORK_CLEARTEXT",
+      "title": "Cleartext network traffic is permitted",
+      "severity": "high",
+      "category": "Network",
+      "description": "Unencrypted HTTP traffic can expose credentials and application data.",
+      "evidence": ["android:usesCleartextTraffic=true", "http://demo.invalid/api/login"],
+      "remediation": "Require HTTPS and use a restrictive Network Security Configuration.",
+      "score": 16
+    },
+    {
+      "rule_id": "CODE_HARDCODED_SECRET",
+      "title": "Potential hardcoded secrets detected",
+      "severity": "high",
+      "category": "Code",
+      "description": "Credential-like values embedded in an APK can be recovered by anyone who obtains the package.",
+      "evidence": ["Potential hardcoded secret in classes.dex: demo…2345"],
+      "remediation": "Remove secrets from client code, rotate exposed values, and use a server-mediated design.",
+      "score": 18
+    },
+    {
+      "rule_id": "SIGNING_V1_ONLY",
+      "title": "APK uses only legacy JAR signing",
+      "severity": "medium",
+      "category": "Signing",
+      "description": "Version 1 signing does not protect every part of the APK in the same way as modern schemes.",
+      "evidence": ["v1=true", "v2=false", "v3=false"],
+      "remediation": "Enable APK Signature Scheme v2 or newer for release builds.",
+      "score": 10
+    }
+  ],
+  "risk": {
+    "score": 90,
+    "rating": "critical",
+    "finding_count": 5,
+    "severity_counts": { "critical": 1, "high": 3, "medium": 1, "low": 0, "info": 0 }
+  }
+}
