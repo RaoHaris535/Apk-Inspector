@@ -146,6 +146,30 @@ class AnalysisReport(IngestionResult):
     risk: RiskSummary
 
 
+class ComparisonDiff(BaseModel):
+    identical_file: bool
+    package_name_matches: bool
+    signing_certificate_matches: bool
+    added_permissions: list[str] = Field(default_factory=list)
+    removed_permissions: list[str] = Field(default_factory=list)
+    added_components: list[str] = Field(default_factory=list)
+    removed_components: list[str] = Field(default_factory=list)
+    added_urls: list[str] = Field(default_factory=list)
+    removed_urls: list[str] = Field(default_factory=list)
+    added_native_libraries: list[str] = Field(default_factory=list)
+    removed_native_libraries: list[str] = Field(default_factory=list)
+    risk_score_delta: int
+
+
+class ComparisonReport(BaseModel):
+    comparison_id: str
+    status: Literal["complete"] = "complete"
+    submitted: AnalysisReport
+    reference: AnalysisReport
+    differences: ComparisonDiff
+    possible_repackaging: bool
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str

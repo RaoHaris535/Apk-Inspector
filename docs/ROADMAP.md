@@ -7,6 +7,6 @@
 - [x] Android security rule engine
 - [x] DEX, endpoint, secret, and native-library indicators
 - [x] Explainable risk scoring and report download
-- [ ] Trusted APK comparison
+- [x] Trusted APK comparison
 - [ ] Controlled test fixtures and integration coverage
 - [ ] Vercel and Render deployment

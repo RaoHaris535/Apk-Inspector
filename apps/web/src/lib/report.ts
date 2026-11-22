@@ -76,6 +76,28 @@ export interface AnalysisReport {
   };
 }
 
+export interface ComparisonReport {
+  comparison_id: string;
+  status: "complete";
+  submitted: AnalysisReport;
+  reference: AnalysisReport;
+  differences: {
+    identical_file: boolean;
+    package_name_matches: boolean;
+    signing_certificate_matches: boolean;
+    added_permissions: string[];
+    removed_permissions: string[];
+    added_components: string[];
+    removed_components: string[];
+    added_urls: string[];
+    removed_urls: string[];
+    added_native_libraries: string[];
+    removed_native_libraries: string[];
+    risk_score_delta: number;
+  };
+  possible_repackaging: boolean;
+}
+
 export function formatBytes(bytes: number) {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;

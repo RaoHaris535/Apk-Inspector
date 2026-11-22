@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, DragEvent, useRef, useState } from "react";
-import { FileArchive, LoaderCircle, LockKeyhole, Upload, X } from "lucide-react";
+import { FileArchive, GitCompareArrows, LoaderCircle, LockKeyhole, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
@@ -15,25 +15,39 @@ function formatBytes(bytes: number) {
 export function UploadPanel() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const referenceInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [referenceFile, setReferenceFile] = useState<File | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
   const [state, setState] = useState<UploadState>("idle");
   const [message, setMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
 
-  const acceptFile = (candidate?: File) => {
+  const validateFile = (candidate?: File) => {
     if (!candidate) return;
     if (!candidate.name.toLowerCase().endsWith(".apk")) {
       setState("error");
       setMessage("Choose a valid Android APK file.");
-      return;
+      return false;
     }
     if (candidate.size > MAX_UPLOAD_BYTES) {
       setState("error");
       setMessage("The selected APK is larger than 100 MB.");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const acceptFile = (candidate?: File) => {
+    if (!candidate || !validateFile(candidate)) return;
     setFile(candidate);
     setState("ready");
+    setMessage("");
+  };
+  const acceptReference = (candidate?: File) => {
+    if (!candidate || !validateFile(candidate)) return;
+    setReferenceFile(candidate);
+    setState(file ? "ready" : "idle");
     setMessage("");
   };
 
@@ -56,16 +70,21 @@ export function UploadPanel() {
     setMessage("Uploading securely and inspecting the package…");
     const form = new FormData();
     form.append("file", file);
+    if (compareMode && referenceFile) form.append("reference_file", referenceFile);
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-      const response = await fetch(`${apiUrl}/api/v1/analyze`, { method: "POST", body: form });
+      const endpoint = compareMode ? "/api/v1/compare" : "/api/v1/analyze";
+      const response = await fetch(`${apiUrl}${endpoint}`, { method: "POST", body: form });
       if (!response.ok) {
         const error = await response.json().catch(() => null);
         throw new Error(error?.detail?.message ?? "Analysis service did not accept the APK.");
       }
-      const report = await response.json();
+      const result = await response.json();
+      const report = compareMode ? result.submitted : result;
       sessionStorage.setItem("apkinspector:last-report", JSON.stringify(report));
+      if (compareMode) sessionStorage.setItem("apkinspector:last-comparison", JSON.stringify(result));
+      else sessionStorage.removeItem("apkinspector:last-comparison");
       router.push("/report");
     } catch (error) {
       setState("error");
@@ -94,10 +113,31 @@ export function UploadPanel() {
           </button>
         )}
       </div>
+      <button
+        className={`comparison-toggle ${compareMode ? "active" : ""}`}
+        type="button"
+        onClick={() => {
+          setCompareMode((current) => !current);
+          setReferenceFile(null);
+        }}
+      >
+        <GitCompareArrows aria-hidden="true" />
+        <span><strong>Compare with trusted APK</strong><small>Check signatures and package differences</small></span>
+      </button>
+      {compareMode && (
+        <div className="reference-picker">
+          <input ref={referenceInputRef} type="file" accept=".apk,application/vnd.android.package-archive" onChange={(event) => acceptReference(event.target.files?.[0])} />
+          <button type="button" onClick={() => referenceInputRef.current?.click()}>
+            <FileArchive aria-hidden="true" />
+            <span>{referenceFile ? referenceFile.name : "Select trusted reference APK"}</span>
+          </button>
+          {referenceFile && <button type="button" className="icon-button" aria-label="Remove reference APK" onClick={() => setReferenceFile(null)}><X aria-hidden="true" /></button>}
+        </div>
+      )}
       {message && <p className={`upload-message ${state}`}>{message}</p>}
-      <button className="analyze-button" type="button" disabled={!file || state === "uploading"} onClick={analyze}>
+      <button className="analyze-button" type="button" disabled={!file || (compareMode && !referenceFile) || state === "uploading"} onClick={analyze}>
         {state === "uploading" ? <LoaderCircle className="spin" aria-hidden="true" /> : <LockKeyhole aria-hidden="true" />}
-        {state === "uploading" ? "Analyzing package" : "Analyze APK securely"}
+        {state === "uploading" ? "Analyzing package" : compareMode ? "Compare APKs securely" : "Analyze APK securely"}
       </button>
       <p className="upload-note">Maximum 100 MB · Static inspection · File deleted after analysis</p>
     </section>

@@ -1,4 +1,3 @@
-from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Annotated
@@ -7,12 +6,12 @@ from uuid import uuid4
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.analyzer.code_scan import scan_code
-from app.analyzer.metadata import MetadataExtractionError, extract_metadata
-from app.analyzer.rules import run_rules, summarize_risk
+from app.analyzer.comparison import compare_reports
+from app.analyzer.metadata import MetadataExtractionError
+from app.analyzer.pipeline import analyze_stored_upload
 from app.config import get_settings
 from app.ingestion import UploadRejected, ingest_upload
-from app.models import AnalysisReport, ErrorDetail
+from app.models import AnalysisReport, ComparisonReport, ErrorDetail
 
 settings = get_settings()
 
@@ -57,20 +56,47 @@ async def analyze(
                 Path(temporary_directory),
                 settings.max_upload_mb * 1024 * 1024,
             )
-            metadata = extract_metadata(stored.path)
-            code = scan_code(stored.path)
-            findings = run_rules(metadata, code)
-            return AnalysisReport(
-                analysis_id=str(uuid4()),
-                filename=stored.original_name,
-                size_bytes=stored.size_bytes,
-                sha256=stored.sha256,
-                received_at=datetime.now(UTC),
-                archive=stored.archive,
-                metadata=metadata,
-                code=code,
-                findings=findings,
-                risk=summarize_risk(findings),
+            return analyze_stored_upload(stored)
+    except UploadRejected as error:
+        status_code = 413 if error.code == "file_too_large" else 400
+        raise HTTPException(
+            status_code=status_code,
+            detail=ErrorDetail(code=error.code, message=error.message).model_dump(),
+        ) from error
+    except MetadataExtractionError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=ErrorDetail(code="invalid_manifest", message=str(error)).model_dump(),
+        ) from error
+
+
+@app.post("/api/v1/compare", response_model=ComparisonReport, tags=["analysis"])
+async def compare(
+    file: Annotated[UploadFile, File(description="APK to inspect")],
+    reference_file: Annotated[UploadFile, File(description="Trusted reference APK")],
+) -> ComparisonReport:
+    try:
+        with TemporaryDirectory(prefix="apkinspector-compare-") as temporary_directory:
+            workspace = Path(temporary_directory)
+            submitted_workspace = workspace / "submitted"
+            reference_workspace = workspace / "reference"
+            submitted_workspace.mkdir()
+            reference_workspace.mkdir()
+            max_bytes = settings.max_upload_mb * 1024 * 1024
+            submitted_upload = await ingest_upload(file, submitted_workspace, max_bytes)
+            reference_upload = await ingest_upload(reference_file, reference_workspace, max_bytes)
+            submitted = analyze_stored_upload(submitted_upload)
+            reference = analyze_stored_upload(reference_upload)
+            differences = compare_reports(submitted, reference)
+            possible_repackaging = (
+                differences.package_name_matches and not differences.signing_certificate_matches
+            )
+            return ComparisonReport(
+                comparison_id=str(uuid4()),
+                submitted=submitted,
+                reference=reference,
+                differences=differences,
+                possible_repackaging=possible_repackaging,
             )
     except UploadRejected as error:
         status_code = 413 if error.code == "file_too_large" else 400

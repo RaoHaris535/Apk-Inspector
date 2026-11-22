@@ -9,13 +9,14 @@ import {
   Download,
   FileJson,
   Fingerprint,
+  GitCompareArrows,
   Info,
   Printer,
   ScanSearch,
   ShieldAlert,
 } from "lucide-react";
 
-import { AnalysisReport, componentCount, formatBytes } from "@/lib/report";
+import { AnalysisReport, ComparisonReport, componentCount, formatBytes } from "@/lib/report";
 
 const severityIcon = {
   critical: ShieldAlert,
@@ -49,6 +50,15 @@ export function ReportView() {
     if (!serializedReport) return null;
     try { return JSON.parse(serializedReport) as AnalysisReport; } catch { return null; }
   }, [serializedReport]);
+  const serializedComparison = useSyncExternalStore(
+    () => () => undefined,
+    () => sessionStorage.getItem("apkinspector:last-comparison"),
+    () => null,
+  );
+  const comparison = useMemo(() => {
+    if (!serializedComparison) return null;
+    try { return JSON.parse(serializedComparison) as ComparisonReport; } catch { return null; }
+  }, [serializedComparison]);
 
   if (!report) {
     return (
@@ -97,6 +107,19 @@ export function ReportView() {
           <Stat label="DEX files" value={report.archive.dex_files} />
           <Stat label="Native libraries" value={report.archive.native_libraries} />
         </section>
+
+        {comparison && (
+          <section className={`comparison-result ${comparison.possible_repackaging ? "repackaged" : "matched"}`}>
+            <GitCompareArrows aria-hidden="true" />
+            <div>
+              <p className="section-kicker">Trusted APK comparison</p>
+              <h2>{comparison.possible_repackaging ? "Possible repackaging detected" : comparison.differences.identical_file ? "Files are identical" : "Package differences found"}</h2>
+              <p>
+                Certificate {comparison.differences.signing_certificate_matches ? "matches" : "does not match"} · {comparison.differences.added_permissions.length} added permissions · {comparison.differences.added_components.length} added components · risk score {comparison.differences.risk_score_delta >= 0 ? "+" : ""}{comparison.differences.risk_score_delta}
+              </p>
+            </div>
+          </section>
+        )}
 
         <section className="report-block">
           <div className="report-block-heading"><div><p className="section-kicker">Prioritized evidence</p><h2>Security findings</h2></div><span>{report.findings.length} total</span></div>

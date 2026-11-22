@@ -46,7 +46,7 @@ def safe_metadata() -> AppMetadata:
 
 
 def test_accepts_structurally_valid_apk(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setattr("app.main.extract_metadata", lambda _: safe_metadata())
+    monkeypatch.setattr("app.analyzer.pipeline.extract_metadata", lambda _: safe_metadata())
     response = client.post(
         "/api/v1/analyze",
         files={"file": ("demo.apk", make_apk(), "application/vnd.android.package-archive")},
