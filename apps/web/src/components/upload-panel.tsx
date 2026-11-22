@@ -60,7 +60,10 @@ export function UploadPanel() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
       const response = await fetch(`${apiUrl}/api/v1/analyze`, { method: "POST", body: form });
-      if (!response.ok) throw new Error("Analysis service did not accept the APK.");
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.detail?.message ?? "Analysis service did not accept the APK.");
+      }
       const report = await response.json();
       sessionStorage.setItem("apkinspector:last-report", JSON.stringify(report));
       router.push("/report");

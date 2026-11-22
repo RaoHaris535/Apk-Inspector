@@ -6,7 +6,7 @@
 - [x] Manifest, certificate, and component extraction
 - [x] Android security rule engine
 - [x] DEX, endpoint, secret, and native-library indicators
-- [ ] Explainable risk scoring and report download
+- [x] Explainable risk scoring and report download
 - [ ] Trusted APK comparison
 - [ ] Controlled test fixtures and integration coverage
 - [ ] Vercel and Render deployment
