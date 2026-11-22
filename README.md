@@ -25,6 +25,24 @@ on the live interface to explore a complete, non-sensitive example. To test a
 real upload, use an APK that you own or are authorized to inspect and keep it
 below 100 MB.
 
+## Classroom-safe demonstration APK
+
+The repository includes a deliberately insecure but behaviorally harmless APK
+fixture under [`samples/safe-insecure-demo`](samples/safe-insecure-demo). It
+declares realistic static red flags but contains no sensitive or malicious
+behavior. The generated APK is intentionally unsigned, so it should be uploaded
+to APKInspector and **not installed on a device**.
+
+To download a prebuilt copy:
+
+1. Open [GitHub Actions](https://github.com/RaoHaris535/Apk-Inspector/actions/workflows/demo-apk.yml).
+2. Open the latest successful **Build classroom demo APK** run.
+3. Download the `apkinspector-safe-insecure-demo` artifact.
+4. Extract the ZIP and upload the `.apk` file to the live interface.
+
+The sample source, safety explanation, local build command, and expected output
+are documented in its [README](samples/safe-insecure-demo/README.md).
+
 ## Architecture
 
 - `apps/web`: Next.js dashboard deployed to Vercel.

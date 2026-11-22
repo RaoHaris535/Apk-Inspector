@@ -1,0 +1,47 @@
+name: Build classroom demo APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "samples/safe-insecure-demo/**"
+      - ".github/workflows/demo-apk.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Download verified Apktool
+        run: |
+          curl --fail --location --show-error \
+            --output "$RUNNER_TEMP/apktool.jar" \
+            https://github.com/iBotPeaches/Apktool/releases/download/v3.0.3/apktool_3.0.3.jar
+          printf '%s  %s\n' \
+            'dbf930b076c6b9be08d57c449cacefc3bdd6b71ebd59b3066fc0e1f5b14f9423' \
+            "$RUNNER_TEMP/apktool.jar" > "$RUNNER_TEMP/apktool.sha256"
+          sha256sum --check "$RUNNER_TEMP/apktool.sha256"
+      - name: Build harmless unsigned demo
+        env:
+          APKTOOL_JAR: ${{ runner.temp }}/apktool.jar
+        run: sh samples/safe-insecure-demo/build.sh
+      - name: Record APK checksum
+        run: |
+          sha256sum samples/safe-insecure-demo/dist/apkinspector-safe-insecure-demo.apk \
+            > samples/safe-insecure-demo/dist/apkinspector-safe-insecure-demo.apk.sha256
+      - uses: actions/upload-artifact@v7
+        with:
+          name: apkinspector-safe-insecure-demo
+          path: |
+            samples/safe-insecure-demo/dist/apkinspector-safe-insecure-demo.apk
+            samples/safe-insecure-demo/dist/apkinspector-safe-insecure-demo.apk.sha256
+          retention-days: 30
+          if-no-files-found: error

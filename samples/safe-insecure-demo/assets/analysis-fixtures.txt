@@ -1,0 +1,9 @@
+APKInspector classroom fixture. These values are inert static examples.
+http://demo.invalid/api/login
+https://telemetry.demo.invalid/collect
+api_key=DEMO_PLACEHOLDER_KEY_12345
+password=classroom_only_password
+AKIADEMO000000000000
+dalvik/system/DexClassLoader
+java/lang/Runtime;->exec
+java/lang/System;->loadLibrary
