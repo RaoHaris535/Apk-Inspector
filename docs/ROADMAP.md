@@ -4,7 +4,7 @@
 - [x] Responsive web dashboard and upload experience
 - [x] Secure APK ingestion API
 - [x] Manifest, certificate, and component extraction
-- [ ] Android security rule engine
+- [x] Android security rule engine
 - [ ] DEX, endpoint, secret, and native-library indicators
 - [ ] Explainable risk scoring and report download
 - [ ] Trusted APK comparison

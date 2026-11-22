@@ -8,6 +8,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 
 from app.models import (
+    ApplicationConfig,
     AppMetadata,
     ComponentInfo,
     ComponentSummary,
@@ -97,6 +98,27 @@ def _signed(apk: Any, method_name: str) -> bool:
         return False
 
 
+def _application_attribute(apk: Any, attribute: str) -> str | None:
+    try:
+        value = apk.get_attribute_value("application", attribute)
+    except (AttributeError, KeyError, TypeError):
+        try:
+            value = apk.get_element("application", attribute)
+        except (AttributeError, KeyError, TypeError):
+            return None
+    return str(value) if value is not None else None
+
+
+def _as_bool(value: str | None) -> bool | None:
+    if value is None:
+        return None
+    if value.lower() in {"true", "1"}:
+        return True
+    if value.lower() in {"false", "0"}:
+        return False
+    return None
+
+
 def extract_metadata(
     path: Path,
     apk_factory: Callable[[str], Any] = APK,
@@ -125,6 +147,12 @@ def extract_metadata(
             minimum=_as_int(apk.get_min_sdk_version()),
             target=_as_int(apk.get_target_sdk_version()),
             maximum=_as_int(apk.get_max_sdk_version()),
+        ),
+        application=ApplicationConfig(
+            debuggable=_as_bool(_application_attribute(apk, "debuggable")),
+            allow_backup=_as_bool(_application_attribute(apk, "allowBackup")),
+            uses_cleartext_traffic=_as_bool(_application_attribute(apk, "usesCleartextTraffic")),
+            network_security_config=_application_attribute(apk, "networkSecurityConfig"),
         ),
         permissions=sorted(set(apk.get_permissions() or [])),
         declared_permissions=sorted(set(apk.get_declared_permissions() or [])),
