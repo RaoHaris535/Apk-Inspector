@@ -2,7 +2,7 @@
 
 - [x] Repository foundation and architecture
 - [x] Responsive web dashboard and upload experience
-- [ ] Secure APK ingestion API
+- [x] Secure APK ingestion API
 - [ ] Manifest, certificate, and component extraction
 - [ ] Android security rule engine
 - [ ] DEX, endpoint, secret, and native-library indicators
