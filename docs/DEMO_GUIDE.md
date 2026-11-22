@@ -2,8 +2,11 @@
 
 ## Preparation
 
-- Start the project with `docker compose up --build`.
-- Confirm the API health endpoint and open the dashboard.
+- Use the [production interface](https://apk-inspector-snowy.vercel.app), or
+  start the project locally with `docker compose up --build`.
+- Confirm the production API health endpoint at
+  `https://apk-inspector-api.onrender.com/api/v1/health`, or use the local
+  endpoint at `http://localhost:8000/api/v1/health`.
 - Keep the three team-owned demonstration APKs in a folder outside this Git
   repository. APK binaries are ignored by Git by design.
 - Use placeholder secrets and the reserved `demo.invalid` domain only.

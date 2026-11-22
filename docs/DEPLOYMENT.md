@@ -3,6 +3,13 @@
 APKInspector uses two services. Deploy the Docker analysis API to Render first,
 then deploy the Next.js interface to Vercel with the API URL.
 
+## Current production deployment
+
+- Web: `https://apk-inspector-snowy.vercel.app`
+- API: `https://apk-inspector-api.onrender.com`
+- Health: `https://apk-inspector-api.onrender.com/api/v1/health`
+- OpenAPI: `https://apk-inspector-api.onrender.com/api/docs`
+
 ## Render API
 
 1. Open the Render dashboard and select **New** then **Blueprint**.
@@ -10,7 +17,8 @@ then deploy the Next.js interface to Vercel with the API URL.
 3. Render detects `render.yaml` and proposes `apk-inspector-api` on the free plan.
 4. Set `APKINSPECTOR_ALLOWED_ORIGINS` temporarily to
    `http://localhost:3000`. After Vercel is deployed, replace it with the exact
-   Vercel production origin, such as `https://apk-inspector.vercel.app`.
+   Vercel production origin, currently
+   `https://apk-inspector-snowy.vercel.app`.
 5. Apply the Blueprint and wait for `/api/v1/health` to report `healthy`.
 6. Copy the resulting `https://...onrender.com` service URL without a trailing
    slash.

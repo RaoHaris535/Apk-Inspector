@@ -7,10 +7,23 @@ without installing or executing the application.
 
 [![CI](https://github.com/RaoHaris535/Apk-Inspector/actions/workflows/ci.yml/badge.svg)](https://github.com/RaoHaris535/Apk-Inspector/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-69f0b0.svg)](LICENSE)
+[![Web interface](https://img.shields.io/badge/live-Vercel-69f0b0.svg)](https://apk-inspector-snowy.vercel.app)
+[![API health](https://img.shields.io/badge/API-Render-69f0b0.svg)](https://apk-inspector-api.onrender.com/api/v1/health)
 
 > APKInspector provides security indicators for education and defensive
 > review. It is not a replacement for antivirus software or a complete mobile
 > application security assessment.
+
+## Try it
+
+- **Live interface:** [apk-inspector-snowy.vercel.app](https://apk-inspector-snowy.vercel.app)
+- **API health:** [apk-inspector-api.onrender.com/api/v1/health](https://apk-inspector-api.onrender.com/api/v1/health)
+- **OpenAPI documentation:** [apk-inspector-api.onrender.com/api/docs](https://apk-inspector-api.onrender.com/api/docs)
+
+No APK is required for a first look. Select **View safe demonstration report**
+on the live interface to explore a complete, non-sensitive example. To test a
+real upload, use an APK that you own or are authorized to inspect and keep it
+below 100 MB.
 
 ## Architecture
 
@@ -94,9 +107,20 @@ docker build --target test -t apkinspector-api-test services/api
 docker run --rm apkinspector-api-test
 ```
 
-The backend test suite enforces at least 85% statement coverage. GitHub Actions
+The backend test suite uses `coverage run -m pytest` followed by
+`coverage report` and enforces at least 85% statement coverage. GitHub Actions
 runs frontend linting, tests, and production compilation plus backend linting
 and tests on pushes and pull requests.
+
+### Manual smoke test
+
+1. Open the [live interface](https://apk-inspector-snowy.vercel.app) and confirm
+   the analyzer status changes to **Analyzer online**.
+2. Open the safe demonstration report, export its JSON, and test print-to-PDF.
+3. Upload an APK you control and confirm a report is generated.
+4. Enable trusted comparison and select two authorized APK variants.
+5. Check the [API health endpoint](https://apk-inspector-api.onrender.com/api/v1/health)
+   if Render is waking from an idle period.
 
 ## Deployment
 
