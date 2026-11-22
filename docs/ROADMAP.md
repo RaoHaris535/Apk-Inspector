@@ -1,7 +1,7 @@
 # Roadmap
 
 - [x] Repository foundation and architecture
-- [ ] Responsive web dashboard and upload experience
+- [x] Responsive web dashboard and upload experience
 - [ ] Secure APK ingestion API
 - [ ] Manifest, certificate, and component extraction
 - [ ] Android security rule engine
